@@ -45,6 +45,8 @@ To obtain expiration timestamp, call:
 openssl x509 -noout -dates -inform der -in cert.der  | grep notAfter
 ```
 
+Then, you need to convert the expiration timestamp to Unix epoch format.
+
 ### Sign Certificate Fingerprint
 
 This sequence of commands signs the fingerprint from `fingerprint.txt` with the private key from the provided key pair file `keypair.pem` and stores the result signature as a Base64 encoded file `sign.txt`.
