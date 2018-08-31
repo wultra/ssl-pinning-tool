@@ -34,10 +34,15 @@ openssl enc -base64 -A < fingerprint_raw.txt > fingerprint.txt
 This sequence of commands signs the fingerprint from `fingerprint.txt` with the private key from the provided key pair file `keypair.pem` and stores the result signature as a Base64 encoded file `sign.txt`.
 
 ```sh
+# Prepare a signature base string as $UNIXTIMESTAMP_EXPIRATION + '&' + $FINGERPRINT
 echo "$UNIXTIMESTAMP_EXPIRATION" > signature_base_string.txt
 echo "&" >> signature_base_string.txt
 cat fingerprint.txt >> signature_base_string.txt
+
+# Sign the signature base string with private key from the key pair
 openssl dgst -sha1 -sign keypair.pem signature_base_string.txt > sign_raw.txt
+
+# Encode result as Base64
 openssl enc -base64 -A < sign_raw.txt > sign.txt
 ```
 
