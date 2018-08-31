@@ -33,8 +33,16 @@ openssl enc -base64 -A < fingerprint_raw.txt > fingerprint.txt
 
 In order to compute the signature, you need to have values of certificate common name and expiration timestamp.
 
+To obtain common name, call:
+
 ```sh
 openssl x509 -noout -subject -inform der -in cert.der | sed -n '/^subject/s/^.*CN=//p'
+```
+
+To obtain expiration timestamp, call:
+
+```sh
+openssl x509 -noout -dates -inform der -in cert.der  | grep notAfter
 ```
 
 ### Sign Certificate Fingerprint
@@ -62,8 +70,7 @@ You need to encode the data into following JSON object:
 
 ```json
 {
-  "status": "OK",
-  "responseObject": [
+  "fingerprints": [
     {
       "name": "$COMMON_NAME:*.example.com",
       "fingerprint": "$FINGERPRINT_BASE64",
