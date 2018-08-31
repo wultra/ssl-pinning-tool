@@ -55,10 +55,10 @@ You need to encode the data into following JSON object:
   "status": "OK",
   "responseObject": [
     {
-      "name": "$COMMON_NAME",
+      "name": "$COMMON_NAME:*.example.com",
       "fingerprint": "$FINGERPRINT_BASE64",
-      "expires": $UNIXTIMESTAMP_EXPIRATION,
-      "signature": "SIGNATURE_BASE64"
+      "expires": "$UNIXTIMESTAMP_EXPIRATION:1535709224",
+      "signature": "$SIGNATURE_BASE64"
     }
   ]
 }
