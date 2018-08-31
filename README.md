@@ -20,13 +20,21 @@ This sequence of commands converts a server certificate stored in the `cert.pem`
 
 ```sh
 # Convert PEM to DER format
-openssl x509 -in cert.pem -inform PEM -outform DER -out key.der
+openssl x509 -in cert.pem -inform PEM -outform DER -out cert.der
 
 # Compute SHA256 digest
-openssl dgst -sha256 < key.der > fingerprint_raw.txt
+openssl dgst -sha256 < cert.der > fingerprint_raw.txt
 
 # Encode the digest as Base64
 openssl enc -base64 -A < fingerprint_raw.txt > fingerprint.txt
+```
+
+## Get Certificate Attributes
+
+In order to compute the signature, you need to have values of certificate common name and expiration timestamp.
+
+```sh
+openssl x509 -noout -subject -inform der -in cert.der | sed -n '/^subject/s/^.*CN=//p'
 ```
 
 ### Sign Certificate Fingerprint
