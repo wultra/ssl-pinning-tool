@@ -74,13 +74,13 @@ openssl enc -base64 -A < sign_raw.txt > sign.txt
 
 You need to encode the data into following JSON object:
 
-```json
+```
 {
   "fingerprints": [
     {
       "name": "$COMMON_NAME:*.example.com",
       "fingerprint": "$FINGERPRINT_BASE64",
-      "expires": $UNIXTIMESTAMP_EXPIRATION:1535709224,
+      "expires": $UNIXTIMESTAMP_EXPIRATION,
       "signature": "$SIGNATURE_BASE64"
     }
   ]
