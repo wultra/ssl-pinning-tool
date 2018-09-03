@@ -6,6 +6,8 @@
 
 ## Prepare Data Using OpenSSL
 
+In case you have your SSL certificate in a `pem` format, you are able to generate all necessary data using OpenSSL.
+
 ### Generate a Key Pair
 
 This command will generate a new ECDSA key pair and store it in the `keypair.pem` file. You need to store this file securely.
@@ -13,6 +15,8 @@ This command will generate a new ECDSA key pair and store it in the `keypair.pem
 ```sh
 openssl ecparam -name prime256v1 -genkey -noout > keypair.pem
 ```
+
+**Store the key pair safely! You will need it next time you replace SSL certificate to generate new signatures.**
 
 ### Prepare a Certificate Fingerprint
 
@@ -45,7 +49,7 @@ To obtain expiration timestamp, call:
 openssl x509 -noout -dates -inform der -in cert.der  | grep notAfter
 ```
 
-Then, you need to convert the expiration timestamp to Unix epoch format.
+Then, you need to convert the expiration timestamp to Unix epoch format (seconds after 1970/01/01).
 
 ### Sign Certificate Fingerprint
 
