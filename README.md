@@ -2,7 +2,59 @@
 
 ## Prepare Data Using Java Utility
 
-// TODO:
+### Supported Java version
+
+Only Java version 8 is supported at the moment.
+
+### Install Bouncy Castle provider
+
+The Bouncy Castle library is required to be installed in JRE to run the Java utility.
+
+See:
+https://github.com/wultra/powerauth-server/wiki/Installing-Bouncy-Castle
+
+### Generate a Key Pair
+
+This command will generate a new ECDSA key pair and store it in the `keypair.pem` file. You need to store this file securely.
+
+```sh
+java -jar ssl-pinning-tool.jar keygen -o keypair.pem -p [password]
+```
+
+**Store the key pair and private key password safely! You will need it next time you replace SSL certificate to generate new signatures.**
+
+### Prepare a Certificate Fingerprint
+
+You need following information:
+* ECDSA keypair for signature (see step above).
+* Domain common name, e.g. `my.domain.com`
+* Certificate fingerprint in HEX format, for example: `8f298429d8063efd734a9eb5098c9ae5cd9f47d7d32def2d2a7585ebce7b88b0`
+* SSL certificate expiration time as Unix timestamp, e.g. `1535708256`
+
+This command will generate the SSL certificate signature:
+
+```sh
+java -jar ssl-pinning-tool.jar sign -k keypair.pem -f 8f298429d8063efd734a9eb5098c9ae5cd9f47d7d32def2d2a7585ebce7b88b0 -t 1535708256 -n my.domain.com -o output.json -p [password]
+```
+
+The output file will contain SSL certificate signature:
+```json
+{
+  "name" : "domain.com",
+  "fingerprint" : "jymEKdgGPv1zSp61CYya5c2fR9fTLe8tKnWF6857iLA=",
+  "expires" : 1535708256,
+  "signature" : "MEUCICOs9bb6TIEmRNHCekxn9URADLYuuZnk4aftpVDzdwmWAiEAlU2r9VDEnAWryxvbAsSJfIlCQjKfumdFbZeUKda166w="
+}
+``` 
+
+### Troubleshooting
+
+Error: 
+```
+SEVERE: Failed to load private key, error: unable to read encrypted data: javax.crypto.BadPaddingException: pad block corrupted
+```
+
+This error is shown when the private key password is invalid. 
 
 ## Prepare Data Using OpenSSL
 
@@ -13,10 +65,10 @@ In case you have your SSL certificate in a `pem` format, you are able to generat
 This command will generate a new ECDSA key pair and store it in the `keypair.pem` file. You need to store this file securely.
 
 ```sh
-openssl ecparam -name prime256v1 -genkey -noout > keypair.pem
+openssl ecparam -name prime256v1 -genkey | openssl pkcs8 -topk8 -v2 aes-128-cbc > keypair.pem
 ```
 
-**Store the key pair safely! You will need it next time you replace SSL certificate to generate new signatures.**
+**Store the key pair and private key password safely! You will need it next time you replace SSL certificate to generate new signatures.**
 
 ### Prepare a Certificate Fingerprint
 
