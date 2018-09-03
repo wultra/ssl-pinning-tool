@@ -249,8 +249,7 @@ public class Application {
      * @return Private key.
      */
     private static PrivateKey loadPrivateKey(String privateKeyPath, String password) throws FingerprintSignatureException {
-        try {
-            final FileReader fileReader = new FileReader(privateKeyPath);
+        try (FileReader fileReader = new FileReader(privateKeyPath)) {
             final PEMParser pemParser = new PEMParser(new BufferedReader(fileReader));
             // Expected key type is EC
             final KeyFactory kf = KeyFactory.getInstance("EC");
