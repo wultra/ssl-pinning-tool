@@ -195,7 +195,7 @@ public class Application {
         final Options options = new Options();
         options.addOption("h", "help", false, "Print this help manual.");
         options.addOption("k", "keys", true, "EC key pair in PEM format stored as PKCS #8.");
-        options.addOption("p", "password", true, "Password for encrypted key pair file in PEM format.");
+        options.addOption("p", "password", true, "Password for encrypted key pair file.");
         options.addOption("o", "output", true, "Output file.");
         options.addOption("n", "name", true, "Domain common name.");
         options.addOption("f", "fingerprint", true, "SHA-256 fingerprint of certificate in HEX format.");
