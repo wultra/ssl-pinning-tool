@@ -29,6 +29,7 @@ import io.getlime.security.powerauth.provider.CryptoProviderUtilFactory;
 import org.apache.commons.cli.*;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.PKCS8Generator;
@@ -58,6 +59,7 @@ import java.util.logging.Logger;
 public class Application {
 
     private static final ASN1ObjectIdentifier PASSWORD_ENCRYPTION_ALGORITHM = PKCS8Generator.AES_128_CBC;
+    private static final AlgorithmIdentifier PASSWORD_ENCRYPTION_PRF = PKCS8Generator.PRF_HMACSHA256;
 
     /**
      * Main entry point.
@@ -295,8 +297,10 @@ public class Application {
         if (keyPairPassword != null) {
             // Password was specified, generate encrypted PEM file
             JceOpenSSLPKCS8EncryptorBuilder encryptorBuilder = new JceOpenSSLPKCS8EncryptorBuilder(PASSWORD_ENCRYPTION_ALGORITHM);
+            encryptorBuilder.setProvider("BC");
             encryptorBuilder.setRandom(new SecureRandom());
             encryptorBuilder.setPasssword(keyPairPassword.toCharArray());
+            encryptorBuilder.setPRF(PASSWORD_ENCRYPTION_PRF);
             try {
                 encryptor = encryptorBuilder.build();
             } catch (OperatorCreationException ex) {
