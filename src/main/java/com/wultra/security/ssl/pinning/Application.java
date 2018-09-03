@@ -221,7 +221,7 @@ public class Application {
         // Load private key
         final PrivateKey privKey = loadPrivateKey(privateKeyPath, privateKeyPassword);
 
-        // Remove all spaces from fingerprint
+        // Remove all whitespaces from fingerprint
         fingerprint = fingerprint.replaceAll("\\s+", "");
 
         // Convert fingerprint to byte[]
