@@ -80,7 +80,7 @@ You need to encode the data into following JSON object:
     {
       "name": "$COMMON_NAME:*.example.com",
       "fingerprint": "$FINGERPRINT_BASE64",
-      "expires": "$UNIXTIMESTAMP_EXPIRATION:1535709224",
+      "expires": $UNIXTIMESTAMP_EXPIRATION:1535709224,
       "signature": "$SIGNATURE_BASE64"
     }
   ]
