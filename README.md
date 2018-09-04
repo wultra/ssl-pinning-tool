@@ -1,5 +1,13 @@
 # Dynamic SSL Pinning Utility Tool
 
+The SSL pinning utility tool is used to sign SSL certificates.
+
+You can use either of the following options:
+- Use the Java utility `ssl-pinning-tool.jar`
+- Use `openssl` commands manually
+
+Both approaches are described in chapters below.
+
 ## Prepare Data Using Java Utility
 
 ### Supported Java Version
@@ -8,14 +16,18 @@ Only Java version 8 is supported at the moment.
 
 ### Install Bouncy Castle provider
 
-The Bouncy Castle library is required to be installed in JRE to run the Java utility.
+The Bouncy Castle library is required to be installed in the JRE in order to run the Java utility.
 
 See:
 https://github.com/wultra/powerauth-server/wiki/Installing-Bouncy-Castle
 
-### Generate a Key Pair
+### Generate a Signing Key Pair
 
-This command will generate a new ECDSA key pair and store it in the `keypair.pem` file. You need to store this file securely.
+Before signing the SSL certificate, you will need to generate a new ECDSA key pair and store it in the `keypair.pem` file. You need to store this file securely. This key pair will be used to sign current certificate and all future certificates. If you already signed a certificate before, skip this step and use the previously generated key pair.
+
+The `keypair.pem` contains the private key. The public key can be printed as described in chapter Export public key. 
+
+The following command generates the key pair in PEM format. The key pair is protected by password of your choice. 
 
 ```sh
 java -jar ssl-pinning-tool.jar keygen -o keypair.pem -p [password]
@@ -23,13 +35,15 @@ java -jar ssl-pinning-tool.jar keygen -o keypair.pem -p [password]
 
 **Store the key pair and private key password safely! You will need it next time you replace SSL certificate to generate new signatures.**
 
-### Prepare a Certificate Signature
+### Prepare Certificate Signature
 
 This command will retrieve the SSL certificate into PEM file:
 
 ```sh
 openssl s_client -showcerts -connect my.domain.com:443 -servername my.domain.com < /dev/null | openssl x509 -outform PEM > cert.pem
 ```
+
+Make sure to replace `my.domain.com` in both `-connect` and `-servername` options with your domain name.
 
 This command will generate the SSL certificate signature:
 
@@ -47,7 +61,7 @@ The output file will contain SSL certificate signature:
 }
 ``` 
 
-### Alternatively, Prepare a Certificate Signature from Information about Certificate
+Alternatively, you can prepare certificate signature from information about the certificate. This approach is useful when the certificate is not deployed yet.
 
 You need following information:
 * Domain common name, e.g. `my.domain.com`
@@ -57,7 +71,7 @@ You need following information:
 This command will generate the SSL certificate signature:
 
 ```sh
-java -jar ssl-pinning-tool.jar sign -k keypair.pem -f 8f298429d8063efd734a9eb5098c9ae5cd9f47d7d32def2d2a7585ebce7b88b0 -t 1535708256 -n my.domain.com -o output.json -p [password]
+java -jar ssl-pinning-tool.jar sign -k keypair.pem -f 8f298429d8063efd734a9eb5098c9ae5cd9f47d7d32def2d2a7585ebce7b88b0 -t 1543322263000 -n my.domain.com -o output.json -p [password]
 ```
 
 The output file will contain JSON with SSL certificate signature:
@@ -72,6 +86,8 @@ The output file will contain JSON with SSL certificate signature:
 
 ### Export Public Key
 
+Mobile app developers will need the public key from generated key pair in order to be able to verify signatures.
+
 You can convert EC private key to public key and print it:
 
 ```sh
@@ -85,7 +101,9 @@ Error:
 SEVERE: Failed to load private key, error: unable to read encrypted data: javax.crypto.BadPaddingException: pad block corrupted
 ```
 
-This error is shown when the private key password is invalid. 
+This error is shown when the private key password is invalid.
+
+Alternatively, you can perform all steps above using `openssl` command.
 
 ## Prepare Data Using OpenSSL
 
@@ -171,6 +189,8 @@ You need to encode the data into following JSON object:
 ```
 
 ### Export public key
+
+Mobile app developers will need the public key from generated key pair in order to be able to verify signatures.
 
 You can convert EC private key to public key:
 
