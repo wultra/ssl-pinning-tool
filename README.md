@@ -2,7 +2,7 @@
 
 ## Prepare Data Using Java Utility
 
-### Supported Java version
+### Supported Java Version
 
 Only Java version 8 is supported at the moment.
 
@@ -23,7 +23,7 @@ java -jar ssl-pinning-tool.jar keygen -o keypair.pem -p [password]
 
 **Store the key pair and private key password safely! You will need it next time you replace SSL certificate to generate new signatures.**
 
-### Prepare a Certificate Fingerprint
+### Prepare a Certificate Signature
 
 This command will retrieve the SSL certificate into PEM file:
 
@@ -47,7 +47,7 @@ The output file will contain SSL certificate signature:
 }
 ``` 
 
-### Alternatively, prepare a Certificate Fingerprint from information about certificate
+### Alternatively, Prepare a Certificate Signature from Information about Certificate
 
 You need following information:
 * Domain common name, e.g. `my.domain.com`
@@ -60,7 +60,7 @@ This command will generate the SSL certificate signature:
 java -jar ssl-pinning-tool.jar sign -k keypair.pem -f 8f298429d8063efd734a9eb5098c9ae5cd9f47d7d32def2d2a7585ebce7b88b0 -t 1535708256 -n my.domain.com -o output.json -p [password]
 ```
 
-The output file will contain SSL certificate signature:
+The output file will contain JSON with SSL certificate signature:
 ```json
 {
   "name" : "my.domain.com",
@@ -70,7 +70,7 @@ The output file will contain SSL certificate signature:
 }
 ``` 
 
-### Export public key
+### Export Public Key
 
 You can convert EC private key to public key and print it:
 
@@ -153,7 +153,7 @@ openssl dgst -sha256 -sign keypair.pem signature_base_string.txt > sign_raw.txt
 openssl enc -base64 -A < sign_raw.txt > sign.txt
 ```
 
-### Prepare the JSON
+### Prepare the JSON with Signature
 
 You need to encode the data into following JSON object:
 
