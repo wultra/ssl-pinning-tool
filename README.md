@@ -152,6 +152,18 @@ openssl x509 -noout -dates -inform der -in cert.der  | grep notAfter
 
 Then, you need to convert the expiration timestamp to Unix epoch format (seconds after 1970/01/01).
 
+```
+TIME=`openssl x509 -noout -dates -inform der -in cert.der | grep notAfter | sed -e 's#notAfter=##'`
+
+if date --version >/dev/null 2>/dev/null; then
+  # Linux
+  date -d "$TIME" "+%s"
+else
+  # MacOSX
+  date -j -f "%b %d %H:%M:%S %Y %Z" "$TIME" "+%s"  
+fi
+```
+
 ### Sign Certificate Fingerprint
 
 This sequence of commands signs the fingerprint from `fingerprint.txt` with the private key from the provided key pair file `keypair.pem` and stores the result signature as a Base64 encoded file `sign.txt`.
