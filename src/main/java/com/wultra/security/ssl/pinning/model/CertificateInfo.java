@@ -16,9 +16,9 @@
 package com.wultra.security.ssl.pinning.model;
 
 /**
- * Class representing a fingerprint record used in SSL pinning tool.
+ * Class representing certificate information record used in SSL pinning tool.
  */
-public class FingerPrint {
+public class CertificateInfo {
 
     private String name;
     private String fingerprint;
@@ -28,7 +28,7 @@ public class FingerPrint {
     /**
      * Default constructor.
      */
-    public FingerPrint() {
+    public CertificateInfo() {
     }
 
     /**
@@ -38,7 +38,7 @@ public class FingerPrint {
      * @param expires Certificate expiration time as using timestamp.
      * @param signature Certificate signature.
      */
-    public FingerPrint(String name, String fingerprint, long expires, String signature) {
+    public CertificateInfo(String name, String fingerprint, long expires, String signature) {
         this.name = name;
         this.fingerprint = fingerprint;
         this.expires = expires;

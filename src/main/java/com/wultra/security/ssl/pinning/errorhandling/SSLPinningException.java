@@ -16,14 +16,14 @@
 package com.wultra.security.ssl.pinning.errorhandling;
 
 /**
- * Exception thrown when fingerprint signature fails.
+ * SSL pinning exception.
  */
-public class FingerprintSignatureException extends Exception {
+public class SSLPinningException extends Exception {
 
     /**
      * Default constructor.
      */
-    public FingerprintSignatureException() {
+    public SSLPinningException() {
         super();
     }
 
@@ -31,7 +31,7 @@ public class FingerprintSignatureException extends Exception {
      * Constructor with error message.
      * @param message Error message.
      */
-    public FingerprintSignatureException(String message) {
+    public SSLPinningException(String message) {
         super(message);
     }
 
@@ -40,7 +40,7 @@ public class FingerprintSignatureException extends Exception {
      * @param message Error message.
      * @param cause Cause.
      */
-    public FingerprintSignatureException(String message, Throwable cause) {
+    public SSLPinningException(String message, Throwable cause) {
         super(message, cause);
     }
 
@@ -48,7 +48,7 @@ public class FingerprintSignatureException extends Exception {
      * Constructor with cause.
      * @param cause Cause.
      */
-    public FingerprintSignatureException(Throwable cause) {
+    public SSLPinningException(Throwable cause) {
         super(cause);
     }
 

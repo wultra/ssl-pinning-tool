@@ -25,11 +25,34 @@ java -jar ssl-pinning-tool.jar keygen -o keypair.pem -p [password]
 
 ### Prepare a Certificate Fingerprint
 
+This command will retrieve the SSL certificate into PEM file:
+
+```sh
+openssl s_client -showcerts -connect my.domain.com:443 -servername my.domain.com < /dev/null | openssl x509 -outform PEM > cert.pem
+```
+
+This command will generate the SSL certificate signature:
+
+```sh
+java -jar ssl-pinning-tool.jar sign -k keypair.pem -c cert.pem -o output.json -p [password]
+```
+
+The output file will contain SSL certificate signature:
+```json
+{
+  "name" : "my.domain.com",
+  "fingerprint" : "jymEKdgGPv1zSp61CYya5c2fR9fTLe8tKnWF6857iLA=",
+  "expires" : 1543322263000,
+  "signature" : "MEUCICOs9bb6TIEmRNHCekxn9URADLYuuZnk4aftpVDzdwmWAiEAlU2r9VDEnAWryxvbAsSJfIlCQjKfumdFbZeUKda166w="
+}
+``` 
+
+### Alternatively, prepare a Certificate Fingerprint from information about certificate
+
 You need following information:
-* ECDSA keypair for signature (see step above).
 * Domain common name, e.g. `my.domain.com`
 * Certificate fingerprint in HEX format, for example: `8f298429d8063efd734a9eb5098c9ae5cd9f47d7d32def2d2a7585ebce7b88b0`
-* SSL certificate expiration time as Unix timestamp, e.g. `1535708256`
+* SSL certificate expiration time as Unix timestamp, e.g. `1543322263000`
 
 This command will generate the SSL certificate signature:
 
@@ -40,12 +63,20 @@ java -jar ssl-pinning-tool.jar sign -k keypair.pem -f 8f298429d8063efd734a9eb509
 The output file will contain SSL certificate signature:
 ```json
 {
-  "name" : "domain.com",
+  "name" : "my.domain.com",
   "fingerprint" : "jymEKdgGPv1zSp61CYya5c2fR9fTLe8tKnWF6857iLA=",
-  "expires" : 1535708256,
+  "expires" : 1543322263000,
   "signature" : "MEUCICOs9bb6TIEmRNHCekxn9URADLYuuZnk4aftpVDzdwmWAiEAlU2r9VDEnAWryxvbAsSJfIlCQjKfumdFbZeUKda166w="
 }
 ``` 
+
+### Export public key
+
+You can convert EC private key to public key and print it:
+
+```sh
+java -jar ssl-pinning-tool.jar export -k keypair.pem -p [password]
+```
 
 ### Troubleshooting
 
@@ -85,7 +116,7 @@ openssl dgst -sha256 < cert.der > fingerprint_raw.txt
 openssl enc -base64 -A < fingerprint_raw.txt > fingerprint.txt
 ```
 
-## Get Certificate Attributes
+### Get Certificate Attributes
 
 In order to compute the signature, you need to have values of certificate common name and expiration timestamp.
 
@@ -116,7 +147,7 @@ echo "&" >> signature_base_string.txt
 cat fingerprint.txt >> signature_base_string.txt
 
 # Sign the signature base string with private key from the key pair
-openssl dgst -sha1 -sign keypair.pem signature_base_string.txt > sign_raw.txt
+openssl dgst -sha256 -sign keypair.pem signature_base_string.txt > sign_raw.txt
 
 # Encode result as Base64
 openssl enc -base64 -A < sign_raw.txt > sign.txt
@@ -137,4 +168,12 @@ You need to encode the data into following JSON object:
     }
   ]
 }
+```
+
+### Export public key
+
+You can convert EC private key to public key:
+
+```sh
+openssl ec -in keypair.pem -pubout
 ```
