@@ -183,7 +183,17 @@ openssl dgst -sha256 -sign keypair.pem signature_base_string.txt > sign_raw.txt
 openssl enc -base64 -A < sign_raw.txt > sign.txt
 ```
 
-### Prepare the JSON with Signature
+### Export public key
+
+Mobile app developers will need the public key from generated key pair in order to be able to verify signatures.
+
+You can convert EC private key to public key:
+
+```sh
+openssl ec -in keypair.pem -pubout
+```
+
+## Prepare the JSON with Signature
 
 You need to encode the data into following JSON object:
 
@@ -198,14 +208,4 @@ You need to encode the data into following JSON object:
     }
   ]
 }
-```
-
-### Export public key
-
-Mobile app developers will need the public key from generated key pair in order to be able to verify signatures.
-
-You can convert EC private key to public key:
-
-```sh
-openssl ec -in keypair.pem -pubout
 ```
