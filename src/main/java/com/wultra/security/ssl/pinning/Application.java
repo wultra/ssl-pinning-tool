@@ -25,6 +25,7 @@ import io.getlime.security.powerauth.crypto.lib.config.PowerAuthConfiguration;
 import io.getlime.security.powerauth.crypto.lib.util.SignatureUtils;
 
 import io.getlime.security.powerauth.crypto.lib.generator.KeyGenerator;
+import io.getlime.security.powerauth.provider.CryptoProviderUtil;
 import io.getlime.security.powerauth.provider.CryptoProviderUtilFactory;
 import org.apache.commons.cli.*;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
@@ -459,13 +460,11 @@ public class Application {
      * Prints public key in PEM format.
      * @param publicKey Public key.
      */
-    private static void printPublicKey(PublicKey publicKey) throws IOException {
-        StringWriter writer = new StringWriter();
-        PemWriter pemWriter = new PemWriter(writer);
-        pemWriter.writeObject(new PemObject("PUBLIC KEY", publicKey.getEncoded()));
-        pemWriter.flush();
-        pemWriter.close();
-        System.out.println("Exported public key:\n" + writer.toString());
+    private static void printPublicKey(PublicKey publicKey) {
+        final CryptoProviderUtil keyConversionUtilities = PowerAuthConfiguration.INSTANCE.getKeyConvertor();
+        byte[] publicKeyBytes = keyConversionUtilities.convertPublicKeyToBytes(publicKey);
+        String publicKeyEncoded = BaseEncoding.base64().encode(publicKeyBytes);
+        System.out.println("Exported public key: " + publicKeyEncoded);
     }
 
 }
