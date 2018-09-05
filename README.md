@@ -82,7 +82,23 @@ The output file will contain JSON with SSL certificate signature:
   "expires" : 1543322263000,
   "signature" : "MEUCICOs9bb6TIEmRNHCekxn9URADLYuuZnk4aftpVDzdwmWAiEAlU2r9VDEnAWryxvbAsSJfIlCQjKfumdFbZeUKda166w="
 }
-``` 
+```
+
+This JSON snippet should be added into the final list of certificate fingerprints. If you have any previous certificate signatures, please merge them with the snipped.
+This JSON file will be published on a web server for mobile clients:
+
+```json
+{
+  "fingerprints": [
+    {
+      "name" : "my.domain.com",
+      "fingerprint" : "jymEKdgGPv1zSp61CYya5c2fR9fTLe8tKnWF6857iLA=",
+      "expires" : 1543322263000,
+      "signature" : "MEUCICOs9bb6TIEmRNHCekxn9URADLYuuZnk4aftpVDzdwmWAiEAlU2r9VDEnAWryxvbAsSJfIlCQjKfumdFbZeUKda166w="
+    }
+  ]
+}
+```
 
 ### Export Public Key
 
@@ -107,7 +123,15 @@ Alternatively, you can perform all steps above using `openssl` command.
 
 ## Prepare Data Using OpenSSL
 
-In case you have your SSL certificate in a `pem` format, you are able to generate all necessary data using OpenSSL.
+You can use `openssl` command to download certificate, generate keypair and prepare the certificate signature. The scripts below should work on Linux or Mac OS X.
+
+This command will retrieve the SSL certificate into DER format which is suitable for computing the SHA-256 fingerprint:
+
+```sh
+openssl s_client -showcerts -connect my.domain.com:443 -servername my.domain.com < /dev/null | openssl x509 -outform DER > cert.der
+```
+
+Make sure to replace `my.domain.com` in both `-connect` and `-servername` options with your domain name.
 
 ### Generate a Key Pair
 
@@ -121,17 +145,10 @@ openssl ecparam -name prime256v1 -genkey | openssl pkcs8 -topk8 -v2 aes-128-cbc 
 
 ### Prepare a Certificate Fingerprint
 
-This sequence of commands converts a server certificate stored in the `cert.pem` file to fingerprint encoded as Base64 and stored in `fingerprint.txt` file.
+This command converts a server certificate stored in the `cert.der` file to SHA-256 fingerprint in binary form, encoded as Base64 and stored in `fingerprint.txt` file.
 
 ```sh
-# Convert PEM to DER format
-openssl x509 -in cert.pem -inform PEM -outform DER -out cert.der
-
-# Compute SHA256 digest
-openssl dgst -sha256 < cert.der > fingerprint_raw.txt
-
-# Encode the digest as Base64
-openssl enc -base64 -A < fingerprint_raw.txt > fingerprint.txt
+FINGERPRINT_BASE64=`openssl dgst -sha256 -binary < cert.der | openssl enc -base64 -A`
 ```
 
 ### Get Certificate Attributes
@@ -141,26 +158,20 @@ In order to compute the signature, you need to have values of certificate common
 To obtain common name, call:
 
 ```sh
-openssl x509 -noout -subject -inform der -in cert.der | sed -n '/^subject/s/^.*CN=//p'
+COMMON_NAME=`openssl x509 -noout -subject -inform der -in cert.der | sed -n '/^subject/s/^.*CN=//p'`
 ```
 
 To obtain expiration timestamp, call:
 
-```sh
-openssl x509 -noout -dates -inform der -in cert.der  | grep notAfter
 ```
-
-Then, you need to convert the expiration timestamp to Unix epoch format (seconds after 1970/01/01).
-
-```
-TIME=`openssl x509 -noout -dates -inform der -in cert.der | grep notAfter | sed -e 's#notAfter=##'`
+EXPIRATION_TIME=`openssl x509 -noout -dates -inform der -in cert.der | grep notAfter | sed -e 's#notAfter=##'`
 
 if date --version >/dev/null 2>/dev/null; then
   # Linux
-  date -d "$TIME" "+%s"
+  UNIXTIMESTAMP_EXPIRATION=`date -d "$EXPIRATION_TIME" "+%s"`
 else
   # MacOSX
-  date -j -f "%b %d %H:%M:%S %Y %Z" "$TIME" "+%s"  
+  UNIXTIMESTAMP_EXPIRATION=`date -j -f "%b %d %H:%M:%S %Y %Z" "$EXPIRATION_TIME" "+%s"`  
 fi
 ```
 
@@ -168,19 +179,28 @@ fi
 
 This sequence of commands signs the fingerprint from `fingerprint.txt` with the private key from the provided key pair file `keypair.pem` and stores the result signature as a Base64 encoded file `sign.txt`.
 
+Prepare a signature base string as $COMMON_NAME + '&' + $UNIXTIMESTAMP_EXPIRATION + '&' + $FINGERPRINT:
 ```sh
-# Prepare a signature base string as $COMMON_NAME + '&' + $UNIXTIMESTAMP_EXPIRATION + '&' + $FINGERPRINT
-echo "$COMMON_NAME" > signature_base_string.txt
-echo "&" >> signature_base_string.txt
-echo "$UNIXTIMESTAMP_EXPIRATION" >> signature_base_string.txt
-echo "&" >> signature_base_string.txt
-cat fingerprint.txt >> signature_base_string.txt
+echo -n "$COMMON_NAME" > signature_base_string.txt
+echo -n "&" >> signature_base_string.txt
+echo -n "$UNIXTIMESTAMP_EXPIRATION" >> signature_base_string.txt
+echo -n "&" >> signature_base_string.txt
+echo -n "$FINGERPRINT_BASE64" >> signature_base_string.txt
+```
 
-# Sign the signature base string with private key from the key pair
-openssl dgst -sha256 -sign keypair.pem signature_base_string.txt > sign_raw.txt
+You can verify the signature base string by printing it:
+```sh
+cat signature_base_string.txt
+```
 
-# Encode result as Base64
-openssl enc -base64 -A < sign_raw.txt > sign.txt
+Sign the signature base string with private key from the key pair:
+```sh
+openssl dgst -sha256 -sign keypair.pem signature_base_string.txt > signature_raw.txt
+```
+
+Encode result as Base64:
+```sh
+SIGNATURE_BASE64=`openssl enc -base64 -A < signature_raw.txt`
 ```
 
 ### Export public key
@@ -195,17 +215,35 @@ openssl ec -in keypair.pem -pubout
 
 ## Prepare the JSON with Signature
 
-You need to encode the data into following JSON object:
+You need to encode the data into JSON. If you have any previous certificate signatures, please merge them with the generated file.
+This JSON file will be published on a web server for mobile clients:
 
+```sh
+echo "{" > fingerprints.json
+echo "  \"fingerprints\": [" >> fingerprints.json
+echo "    {" >> fingerprints.json
+echo "      \"name\": \"$COMMON_NAME\"," >> fingerprints.json
+echo "      \"fingerprint\": \"$FINGERPRINT_BASE64\"," >> fingerprints.json
+echo "      \"expires\": $UNIXTIMESTAMP_EXPIRATION," >> fingerprints.json
+echo "      \"signature\": \"$SIGNATURE_BASE64\"" >> fingerprints.json
+echo "    }" >> fingerprints.json
+echo "  ]" >> fingerprints.json
+echo "}" >> fingerprints.json
 ```
-{
-  "fingerprints": [
-    {
-      "name": "$COMMON_NAME:*.example.com",
-      "fingerprint": "$FINGERPRINT_BASE64",
-      "expires": $UNIXTIMESTAMP_EXPIRATION,
-      "signature": "$SIGNATURE_BASE64"
-    }
-  ]
-}
+
+You can obtain the JSON output using command:
+```sh
+cat fingerprints.json
+```
+
+### Export public key
+
+Mobile app developers will need the public key from generated key pair in order to be able to verify signatures.
+
+The `openssl` command cannot export ECDSA public key in raw format, so you will need to use our Java utility for the export.
+
+You can convert EC private key to public key and print it:
+
+```sh
+java -jar ssl-pinning-tool.jar export -k keypair.pem -p [password]
 ```
