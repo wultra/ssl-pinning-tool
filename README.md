@@ -203,7 +203,17 @@ Encode result as Base64:
 SIGNATURE_BASE64=`openssl enc -base64 -A < signature_raw.txt`
 ```
 
-### Prepare the JSON with Signature
+### Export public key
+
+Mobile app developers will need the public key from generated key pair in order to be able to verify signatures.
+
+You can convert EC private key to public key:
+
+```sh
+openssl ec -in keypair.pem -pubout
+```
+
+## Prepare the JSON with Signature
 
 You need to encode the data into JSON. If you have any previous certificate signatures, please merge them with the generated file.
 This JSON file will be published on a web server for mobile clients:
