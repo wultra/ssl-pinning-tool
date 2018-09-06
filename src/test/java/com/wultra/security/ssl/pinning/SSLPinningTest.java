@@ -102,6 +102,7 @@ class SSLPinningTest {
         Scanner scanner = new Scanner(new File(jsonFile.getAbsolutePath()));
         scanner.useDelimiter("\\Z");
         String generatedJson = scanner.next();
+        scanner.close();
         // replace current signature with static string, it is always different
         generatedJson = generatedJson.replace(certInfo.getSignature(), "SIGNATURE");
         assertEquals("{\n" +
