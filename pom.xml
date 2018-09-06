@@ -4,13 +4,18 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <name>ssl-pinning-tools</name>
+    <name>ssl-pinning-tool</name>
     <description>PowerAuth Command-line Utility</description>
 
     <groupId>com.wultra</groupId>
     <artifactId>ssl-pinning-tool</artifactId>
     <version>0.1.0</version>
     <packaging>jar</packaging>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.0.4.RELEASE</version>
+    </parent>
 
     <inceptionYear>2018</inceptionYear>
     <url>https://wultra.com</url>
@@ -85,34 +90,14 @@
 
     <build>
         <plugins>
-            <!-- Maven Assembly Plugin -->
+            <!-- Use spring-boot-maven-plugin to generate fat jar, however start application with a regular Main class -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.4.1</version>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>2.0.4.RELEASE</version>
                 <configuration>
-                    <!-- get all project dependencies -->
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <!-- MainClass in mainfest make a executable jar -->
-                    <archive>
-                        <manifest>
-                            <mainClass>com.wultra.security.ssl.pinning.Application</mainClass>
-                        </manifest>
-                    </archive>
-
+                    <mainClass>com.wultra.security.ssl.pinning.Application</mainClass>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <!-- bind to the packaging phase -->
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
