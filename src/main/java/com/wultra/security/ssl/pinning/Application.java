@@ -72,24 +72,29 @@ public class Application {
     private static final ASN1ObjectIdentifier PASSWORD_ENCRYPTION_ALGORITHM = PKCS8Generator.AES_128_CBC;
     private static final AlgorithmIdentifier PASSWORD_ENCRYPTION_PRF = PKCS8Generator.PRF_HMACSHA256;
 
+    Application() {
+        // Enable one-line logging
+        System.setProperty("java.util.logging.SimpleFormatter.format", "%1$tF %1$tT - %4$s %5$s%6$s%n");
+
+        // Add Bouncy Castle Security Provider
+        Security.addProvider(new BouncyCastleProvider());
+        PowerAuthConfiguration.INSTANCE.setKeyConvertor(CryptoProviderUtilFactory.getCryptoProviderUtils());
+    }
+
     /**
      * Main entry point.
      *
      * @param args Command line arguments.
      */
     public static void main(String[] args) {
+        Application app = new Application();
 
-        // Enable one-line logging
-        System.setProperty("java.util.logging.SimpleFormatter.format", "%1$tF %1$tT - %4$s %5$s%6$s%n");
-
-        initializeBC();
-
-        CommandLine cmd = prepareCommandLine(args);
+        CommandLine cmd = app.prepareCommandLine(args);
         if (cmd == null) {
             return;
         }
 
-        executeCommand(cmd);
+        app.executeCommand(cmd);
     }
 
     /**
@@ -97,7 +102,7 @@ public class Application {
      *
      * @param cmd CommandLine instance.
      */
-    private static void executeCommand(CommandLine cmd) {
+    private void executeCommand(CommandLine cmd) {
         // Read configuration
         final String privateKeyPath = cmd.getOptionValue("k");
         final String outputPath = cmd.getOptionValue("o");
@@ -195,20 +200,11 @@ public class Application {
     }
 
     /**
-     * Initialize Bouncy Castle library.
-     */
-    private static void initializeBC() {
-        // Add Bouncy Castle Security Provider
-        Security.addProvider(new BouncyCastleProvider());
-        PowerAuthConfiguration.INSTANCE.setKeyConvertor(CryptoProviderUtilFactory.getCryptoProviderUtils());
-    }
-
-    /**
      * Prepare command line object.
      * @param args Command line arguments.
      * @return Command line object.
      */
-    private static CommandLine prepareCommandLine(String[] args) {
+    private CommandLine prepareCommandLine(String[] args) {
         // Parse options
         final Options options = buildOptions();
 
@@ -235,7 +231,7 @@ public class Application {
      * Build command line options.
      * @return Command line options.
      */
-    private static Options buildOptions() {
+    private Options buildOptions() {
         // Options definition
         final Options options = new Options();
         options.addOption("h", "help", false, "Print this help manual.");
@@ -262,7 +258,7 @@ public class Application {
      * @throws java.security.SignatureException Thrown when signature computation fails.
      * @throws InvalidKeyException Thrown when signature key is invalid.
      */
-    private static CertificateInfo sign(String privateKeyPath, String privateKeyPassword, String commonName, String fingerprint, long expirationTime)
+    CertificateInfo sign(String privateKeyPath, String privateKeyPassword, String commonName, String fingerprint, long expirationTime)
             throws SSLPinningException, SignatureException, InvalidKeyException {
         // Load private key
         final PrivateKey privKey = loadPrivateKey(privateKeyPath, privateKeyPassword);
@@ -298,8 +294,8 @@ public class Application {
      * @throws java.security.SignatureException Thrown when data signature could not be computed.
      * @throws InvalidKeyException Thrown when private key is invalid.
      */
-    private static CertificateInfo sign(String privateKeyPath, String privateKeyPassword, CertificateInfo certInfo) throws SSLPinningException, java.security.SignatureException, InvalidKeyException {
-        return sign(privateKeyPath, privateKeyPassword, certInfo.getName(), certInfo.getSignature(), certInfo.getExpires());
+    CertificateInfo sign(String privateKeyPath, String privateKeyPassword, CertificateInfo certInfo) throws SSLPinningException, java.security.SignatureException, InvalidKeyException {
+        return sign(privateKeyPath, privateKeyPassword, certInfo.getName(), certInfo.getFingerprint(), certInfo.getExpires());
     }
 
     /**
@@ -308,7 +304,7 @@ public class Application {
      * @param password Private key password (optional).
      * @return Private key.
      */
-    private static PrivateKey loadPrivateKey(String privateKeyPath, String password) throws SSLPinningException {
+    PrivateKey loadPrivateKey(String privateKeyPath, String password) throws SSLPinningException {
         try (FileReader fileReader = new FileReader(privateKeyPath)) {
             final PEMParser pemParser = new PEMParser(new BufferedReader(fileReader));
             // Expected key type is EC
@@ -346,7 +342,7 @@ public class Application {
      * @return Information about certificate.
      * @throws SSLPinningException Thrown when certificate could not be loaded.
      */
-    private static CertificateInfo readCertificateInfo(String certificatePath) throws SSLPinningException {
+    CertificateInfo readCertificateInfo(String certificatePath) throws SSLPinningException {
         try (FileReader fileReader = new FileReader(certificatePath)) {
             final PEMParser pemParser = new PEMParser(new BufferedReader(fileReader));
             final Object pemInfo = pemParser.readObject();
@@ -355,7 +351,7 @@ public class Application {
                 X509CertificateHolder x509Cert = (X509CertificateHolder) pemInfo;
                 CertificateInfo certInfo = new CertificateInfo();
                 byte[] signature = computeSHA256Signature(x509Cert.getEncoded());
-                certInfo.setSignature(new String(Hex.encode(signature)));
+                certInfo.setFingerprint(new String(Hex.encode(signature)));
                 certInfo.setExpires(x509Cert.getNotAfter().getTime());
                 X500Name x500Name = x509Cert.getSubject();
                 RDN commonNameRDN = x500Name.getRDNs(BCStyle.CN)[0];
@@ -376,7 +372,7 @@ public class Application {
      * @return SHA-256 signature of data.
      * @throws NoSuchAlgorithmException Thrown when SHA-256 algorithm is not supported.
      */
-    private static byte[] computeSHA256Signature(byte[] certificateData) throws NoSuchAlgorithmException {
+    private byte[] computeSHA256Signature(byte[] certificateData) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         md.update(certificateData);
         return md.digest();
@@ -388,7 +384,7 @@ public class Application {
      * @param keyPairPassword Private key password (optional).
      * @throws IOException Thrown when key pair could not be generates.
      */
-    private static void generateKeyPair(String outputPath, String keyPairPassword) throws IOException {
+    void generateKeyPair(String outputPath, String keyPairPassword) throws IOException {
         final KeyGenerator keyGen = new KeyGenerator();
         final KeyPair keyPair = keyGen.generateKeyPair();
         OutputEncryptor encryptor = null;
@@ -428,7 +424,7 @@ public class Application {
      * @param fingerPrint Fingerprint with signature details.
      * @throws IOException Thrown when JSON file could not be generated.
      */
-    private static void generateJsonFile(String outputPath, CertificateInfo fingerPrint) throws IOException {
+    void generateJsonFile(String outputPath, CertificateInfo fingerPrint) throws IOException {
         final ObjectMapper objectMapper = new ObjectMapper();
         final FileWriter fw = new FileWriter(outputPath);
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
@@ -443,7 +439,7 @@ public class Application {
      * @param privateKeyPassword Private key password.
      * @throws SSLPinningException Thrown when export fails.
      */
-    private static PublicKey exportPublicKey(String privateKeyPath, String privateKeyPassword) throws SSLPinningException {
+    PublicKey exportPublicKey(String privateKeyPath, String privateKeyPassword) throws SSLPinningException {
         try {
             PrivateKey privateKey = loadPrivateKey(privateKeyPath, privateKeyPassword);
             KeyFactory keyFactory = KeyFactory.getInstance("ECDSA", "BC");
@@ -460,7 +456,7 @@ public class Application {
      * Prints public key in PEM format.
      * @param publicKey Public key.
      */
-    private static void printPublicKey(PublicKey publicKey) {
+    private void printPublicKey(PublicKey publicKey) {
         final CryptoProviderUtil keyConversionUtilities = PowerAuthConfiguration.INSTANCE.getKeyConvertor();
         byte[] publicKeyBytes = keyConversionUtilities.convertPublicKeyToBytes(publicKey);
         String publicKeyEncoded = BaseEncoding.base64().encode(publicKeyBytes);
