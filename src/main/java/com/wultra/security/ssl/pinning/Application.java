@@ -308,7 +308,7 @@ public class Application {
         try (FileReader fileReader = new FileReader(privateKeyPath)) {
             final PEMParser pemParser = new PEMParser(new BufferedReader(fileReader));
             // Expected key type is EC
-            final KeyFactory kf = KeyFactory.getInstance("EC");
+            final KeyFactory kf = KeyFactory.getInstance("ECDSA", "BC");
             final Object pemInfo = pemParser.readObject();
             pemParser.close();
             if (pemInfo instanceof PrivateKeyInfo) {
