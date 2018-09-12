@@ -54,10 +54,10 @@ class SSLPinningTest {
     @Test
     void testSignatureWithDetails() throws SSLPinningException, SignatureException, InvalidKeyException {
         CertificateInfo certInfo = app.sign(keyPairFile.getAbsolutePath(), PRIVATE_KEY_PASSWORD,
-                "www.google.com", "9eed43381cf7d58e4563a951364255fc776707a043542a7b997d27c646ee6fb6", 1540280280000L);
+                "www.google.com", "9eed43381cf7d58e4563a951364255fc776707a043542a7b997d27c646ee6fb6", 1540280280L);
         byte[] signature = BaseEncoding.base64().decode(certInfo.getSignature());
         PublicKey publicKey = app.exportPublicKey(keyPairFile.getAbsolutePath(), PRIVATE_KEY_PASSWORD);
-        String payload = "www.google.com&nu1DOBz31Y5FY6lRNkJV/HdnB6BDVCp7mX0nxkbub7Y=&1540280280000";
+        String payload = "www.google.com&nu1DOBz31Y5FY6lRNkJV/HdnB6BDVCp7mX0nxkbub7Y=&1540280280";
         final SignatureUtils utils = new SignatureUtils();
         assertTrue(utils.validateECDSASignature(payload.getBytes(), signature, publicKey));
     }
@@ -66,12 +66,12 @@ class SSLPinningTest {
     void testSignatureWithCertInfo() throws SSLPinningException, SignatureException, InvalidKeyException {
         CertificateInfo certInfoIn = new CertificateInfo();
         certInfoIn.setName("www.google.com");
-        certInfoIn.setExpires(1540280280000L);
+        certInfoIn.setExpires(1540280280L);
         certInfoIn.setFingerprint("9eed43381cf7d58e4563a951364255fc776707a043542a7b997d27c646ee6fb6");
         CertificateInfo certInfo = app.sign(keyPairFile.getAbsolutePath(), PRIVATE_KEY_PASSWORD, certInfoIn);
         byte[] signature = BaseEncoding.base64().decode(certInfo.getSignature());
         PublicKey publicKey = app.exportPublicKey(keyPairFile.getAbsolutePath(), PRIVATE_KEY_PASSWORD);
-        String payload = "www.google.com&nu1DOBz31Y5FY6lRNkJV/HdnB6BDVCp7mX0nxkbub7Y=&1540280280000";
+        String payload = "www.google.com&nu1DOBz31Y5FY6lRNkJV/HdnB6BDVCp7mX0nxkbub7Y=&1540280280";
         final SignatureUtils utils = new SignatureUtils();
         assertTrue(utils.validateECDSASignature(payload.getBytes(), signature, publicKey));
     }
@@ -84,7 +84,7 @@ class SSLPinningTest {
         fw.close();
         CertificateInfo certInfo = app.readCertificateInfo(cerFile.getAbsolutePath());
         assertEquals("www.google.com", certInfo.getName());
-        assertEquals(1540280280000L, certInfo.getExpires());
+        assertEquals(1540280280L, certInfo.getExpires());
         assertEquals("9eed43381cf7d58e4563a951364255fc776707a043542a7b997d27c646ee6fb6", certInfo.getFingerprint());
         assertTrue(cerFile.delete());
     }
@@ -108,7 +108,7 @@ class SSLPinningTest {
         assertEquals("{\n" +
                 "  \"name\" : \"www.google.com\",\n" +
                 "  \"fingerprint\" : \"nu1DOBz31Y5FY6lRNkJV/HdnB6BDVCp7mX0nxkbub7Y=\",\n" +
-                "  \"expires\" : 1540280280000,\n" +
+                "  \"expires\" : 1540280280,\n" +
                 "  \"signature\" : \"SIGNATURE\"\n" +
                 "}", generatedJson);
         assertTrue(cerFile.delete());
