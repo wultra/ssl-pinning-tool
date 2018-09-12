@@ -352,7 +352,8 @@ public class Application {
                 CertificateInfo certInfo = new CertificateInfo();
                 byte[] signature = computeSHA256Signature(x509Cert.getEncoded());
                 certInfo.setFingerprint(new String(Hex.encode(signature)));
-                certInfo.setExpires(x509Cert.getNotAfter().getTime());
+                // Expiration timestamps is stored as unix timestamp with seconds
+                certInfo.setExpires(x509Cert.getNotAfter().getTime()/1000);
                 X500Name x500Name = x509Cert.getSubject();
                 RDN commonNameRDN = x500Name.getRDNs(BCStyle.CN)[0];
                 String commonName = IETFUtils.valueToString(commonNameRDN.getFirst().getValue());
