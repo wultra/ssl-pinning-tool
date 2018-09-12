@@ -78,16 +78,16 @@ public class CertificateInfo {
     }
 
     /**
-     * Get expiration time as Unix timestamp.
-     * @return Expiration time as Unix timestamp.
+     * Get expiration time as Unix timestamp in seconds.
+     * @return Expiration time as Unix timestamp in seconds.
      */
     public long getExpires() {
         return expires;
     }
 
     /**
-     * Set expiration time as Unix timestamp.
-     * @param expires Expiration time as Unix timestamp.
+     * Set expiration time as Unix timestamp in seconds.
+     * @param expires Expiration time as Unix timestamp in seconds.
      */
     public void setExpires(long expires) {
         this.expires = expires;

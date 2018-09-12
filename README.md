@@ -56,7 +56,7 @@ The output file will contain SSL certificate signature:
 {
   "name" : "my.domain.com",
   "fingerprint" : "jymEKdgGPv1zSp61CYya5c2fR9fTLe8tKnWF6857iLA=",
-  "expires" : 1543322263000,
+  "expires" : 1543322263,
   "signature" : "MEUCICOs9bb6TIEmRNHCekxn9URADLYuuZnk4aftpVDzdwmWAiEAlU2r9VDEnAWryxvbAsSJfIlCQjKfumdFbZeUKda166w="
 }
 ``` 
@@ -66,12 +66,12 @@ Alternatively, you can prepare certificate signature from information about the 
 You need following information:
 * Domain common name, e.g. `my.domain.com`
 * Certificate fingerprint in HEX format, for example: `8f298429d8063efd734a9eb5098c9ae5cd9f47d7d32def2d2a7585ebce7b88b0`
-* SSL certificate expiration time as Unix timestamp, e.g. `1543322263000`
+* SSL certificate expiration time as Unix timestamp in seconds, e.g. `1543322263`
 
 This command will generate the SSL certificate signature:
 
 ```sh
-java -jar ssl-pinning-tool.jar sign -k keypair.pem -f 8f298429d8063efd734a9eb5098c9ae5cd9f47d7d32def2d2a7585ebce7b88b0 -t 1543322263000 -n my.domain.com -o output.json -p [password]
+java -jar ssl-pinning-tool.jar sign -k keypair.pem -f 8f298429d8063efd734a9eb5098c9ae5cd9f47d7d32def2d2a7585ebce7b88b0 -t 1543322263 -n my.domain.com -o output.json -p [password]
 ```
 
 The output file will contain JSON with SSL certificate signature:
@@ -79,7 +79,7 @@ The output file will contain JSON with SSL certificate signature:
 {
   "name" : "my.domain.com",
   "fingerprint" : "jymEKdgGPv1zSp61CYya5c2fR9fTLe8tKnWF6857iLA=",
-  "expires" : 1543322263000,
+  "expires" : 1543322263,
   "signature" : "MEUCICOs9bb6TIEmRNHCekxn9URADLYuuZnk4aftpVDzdwmWAiEAlU2r9VDEnAWryxvbAsSJfIlCQjKfumdFbZeUKda166w="
 }
 ```
@@ -93,7 +93,7 @@ This JSON file will be published on a web server for mobile clients:
     {
       "name" : "my.domain.com",
       "fingerprint" : "jymEKdgGPv1zSp61CYya5c2fR9fTLe8tKnWF6857iLA=",
-      "expires" : 1543322263000,
+      "expires" : 1543322263,
       "signature" : "MEUCICOs9bb6TIEmRNHCekxn9URADLYuuZnk4aftpVDzdwmWAiEAlU2r9VDEnAWryxvbAsSJfIlCQjKfumdFbZeUKda166w="
     }
   ]
