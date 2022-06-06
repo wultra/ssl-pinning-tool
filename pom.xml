@@ -9,7 +9,7 @@
 
     <groupId>com.wultra</groupId>
     <artifactId>ssl-pinning-tool</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3-SNAPSHOT</version>
     <packaging>jar</packaging>
     <parent>
         <groupId>org.springframework.boot</groupId>
