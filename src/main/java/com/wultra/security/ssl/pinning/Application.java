@@ -21,12 +21,12 @@ import com.google.common.base.Charsets;
 import com.google.common.io.BaseEncoding;
 import com.wultra.security.ssl.pinning.errorhandling.SSLPinningException;
 import com.wultra.security.ssl.pinning.model.CertificateInfo;
-import io.getlime.security.powerauth.crypto.lib.config.PowerAuthConfiguration;
+import io.getlime.security.powerauth.crypto.lib.model.exception.CryptoProviderException;
+import io.getlime.security.powerauth.crypto.lib.model.exception.GenericCryptoException;
+import io.getlime.security.powerauth.crypto.lib.util.KeyConvertor;
 import io.getlime.security.powerauth.crypto.lib.util.SignatureUtils;
 
 import io.getlime.security.powerauth.crypto.lib.generator.KeyGenerator;
-import io.getlime.security.powerauth.provider.CryptoProviderUtil;
-import io.getlime.security.powerauth.provider.CryptoProviderUtilFactory;
 import org.apache.commons.cli.*;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
@@ -56,18 +56,20 @@ import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemObjectGenerator;
 import org.bouncycastle.util.io.pem.PemWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.security.*;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * SSL pinning tool command line application for generating signatures of SSL certificates.
  */
 public class Application {
+
+    private static final Logger logger = LoggerFactory.getLogger(Application.class);
 
     private static final ASN1ObjectIdentifier PASSWORD_ENCRYPTION_ALGORITHM = PKCS8Generator.AES_128_CBC;
     private static final AlgorithmIdentifier PASSWORD_ENCRYPTION_PRF = PKCS8Generator.PRF_HMACSHA256;
@@ -78,7 +80,6 @@ public class Application {
 
         // Add Bouncy Castle Security Provider
         Security.addProvider(new BouncyCastleProvider());
-        PowerAuthConfiguration.INSTANCE.setKeyConvertor(CryptoProviderUtilFactory.getCryptoProviderUtils());
     }
 
     /**
@@ -87,9 +88,9 @@ public class Application {
      * @param args Command line arguments.
      */
     public static void main(String[] args) {
-        Application app = new Application();
+        final Application app = new Application();
 
-        CommandLine cmd = app.prepareCommandLine(args);
+        final CommandLine cmd = app.prepareCommandLine(args);
         if (cmd == null) {
             return;
         }
@@ -118,7 +119,7 @@ public class Application {
             try {
                 expirationTime = Long.parseLong(expires);
             } catch (NumberFormatException ex) {
-                Logger.getLogger(Application.class.getName()).log(Level.SEVERE, ex.getMessage(), ex);
+                logger.error(ex.getMessage(), ex);
                 return;
             }
         }
@@ -130,39 +131,39 @@ public class Application {
                 // Sign fingerprint data
                 try {
                     if (privateKeyPath == null) {
-                        Logger.getLogger(Application.class.getName()).log(Level.SEVERE, "Private key path is not specified, cannot compute signature.");
+                        logger.error("Private key path is not specified, cannot compute signature.");
                         return;
                     }
                     if (outputPath == null) {
-                        Logger.getLogger(Application.class.getName()).log(Level.SEVERE, "Output path is not specified, cannot generate JSON file.");
+                        logger.error("Output path is not specified, cannot generate JSON file.");
                         return;
                     }
                     if (certificatePath == null && commonName == null) {
-                        Logger.getLogger(Application.class.getName()).log(Level.SEVERE, "Common name is not specified, cannot compute signature.");
+                        logger.error("Common name is not specified, cannot compute signature.");
                         return;
                     }
                     if (certificatePath == null && fingerprint == null) {
-                        Logger.getLogger(Application.class.getName()).log(Level.SEVERE, "Fingerprint is not specified, cannot compute signature.");
+                        logger.error("Fingerprint is not specified, cannot compute signature.");
                         return;
                     }
                     if (certificatePath == null && expirationTime == null) {
-                        Logger.getLogger(Application.class.getName()).log(Level.SEVERE, "Expiration time is not specified, cannot compute signature.");
+                        logger.error("Expiration time is not specified, cannot compute signature.");
                         return;
                     }
                     if (certificatePath != null && (commonName != null || fingerprint != null && expirationTime != null)) {
-                        Logger.getLogger(Application.class.getName()).log(Level.SEVERE, "Ambiguous certificate data found, cannot compute signature.");
+                        logger.error("Ambiguous certificate data found, cannot compute signature.");
                         return;
                     }
-                    CertificateInfo signedFingerprint;
+                    final CertificateInfo signedFingerprint;
                     if (certificatePath != null) {
-                        CertificateInfo certInfo = readCertificateInfo(certificatePath);
+                        final CertificateInfo certInfo = readCertificateInfo(certificatePath);
                         signedFingerprint = sign(privateKeyPath, privateKeyPassword, certInfo);
                     } else {
                         signedFingerprint = sign(privateKeyPath, privateKeyPassword, commonName, fingerprint, expirationTime);
                     }
                     generateJsonFile(outputPath, signedFingerprint);
                 } catch (Exception ex) {
-                    Logger.getLogger(Application.class.getName()).log(Level.SEVERE, ex.getMessage(), ex);
+                    logger.error(ex.getMessage(), ex);
                 }
                 break;
 
@@ -170,12 +171,12 @@ public class Application {
                 // Generate keypair
                 try {
                     if (outputPath == null) {
-                        Logger.getLogger(Application.class.getName()).log(Level.SEVERE, "Output path is not specified, cannot generate key pair.");
+                        logger.error("Output path is not specified, cannot generate key pair.");
                         return;
                     }
                     generateKeyPair(outputPath, privateKeyPassword);
                 } catch (Exception ex) {
-                    Logger.getLogger(Application.class.getName()).log(Level.SEVERE, ex.getMessage(), ex);
+                    logger.error(ex.getMessage(), ex);
                 }
                 break;
 
@@ -183,19 +184,32 @@ public class Application {
                 // Export public key
                 try {
                     if (privateKeyPath == null) {
-                        Logger.getLogger(Application.class.getName()).log(Level.SEVERE, "Private key path is not specified, cannot export public key.");
+                        logger.error("Private key path is not specified, cannot export public key.");
                         return;
                     }
-                    PublicKey publicKey = exportPublicKey(privateKeyPath, privateKeyPassword);
+                    final PublicKey publicKey = exportPublicKey(privateKeyPath, privateKeyPassword);
                     printPublicKey(publicKey);
                 } catch (Exception ex) {
-                    Logger.getLogger(Application.class.getName()).log(Level.SEVERE, ex.getMessage(), ex);
+                    logger.error(ex.getMessage(), ex);
                 }
                 break;
 
+            case "export-private":
+                // Export public key
+                try {
+                    if (privateKeyPath == null) {
+                        logger.error("Private key path is not specified, cannot export public key.");
+                        return;
+                    }
+                    final PrivateKey privateKey = exportPrivateKey(privateKeyPath, privateKeyPassword);
+                    printPrivateKey(privateKey);
+                } catch (Exception ex) {
+                    logger.error(ex.getMessage(), ex);
+                }
+                break;
             default:
                 // Unknown action
-                Logger.getLogger(Application.class.getName()).log(Level.SEVERE, "Unknown command: " + command);
+                logger.error("Unknown command: " + command);
         }
     }
 
@@ -211,17 +225,17 @@ public class Application {
         // Prepare command line
         final CommandLine cmd;
         try {
-            CommandLineParser parser = new DefaultParser();
+            final CommandLineParser parser = new DefaultParser();
             cmd = parser.parse(options, args);
             // Print options when user specified no options or help was invoked
             if (args.length == 0 || cmd.hasOption("h")) {
-                HelpFormatter formatter = new HelpFormatter();
+                final HelpFormatter formatter = new HelpFormatter();
                 formatter.setWidth(100);
                 formatter.printHelp("java -jar ssl-pinning-tool.jar", options);
                 return null;
             }
         } catch (ParseException ex) {
-            Logger.getLogger(Application.class.getName()).log(Level.SEVERE, ex.getMessage(), ex);
+            logger.error(ex.getMessage(), ex);
             return null;
         }
         return cmd;
@@ -255,19 +269,19 @@ public class Application {
      * @param expirationTime Expiration time as Unix timestamp.
      * @return Fingerprint object.
      * @throws SSLPinningException Thrown when encryption fails.
-     * @throws java.security.SignatureException Thrown when signature computation fails.
      * @throws InvalidKeyException Thrown when signature key is invalid.
+     * @throws SSLPinningException Thrown when issue happens with SSL pinning data.
      */
     CertificateInfo sign(String privateKeyPath, String privateKeyPassword, String commonName, String fingerprint, long expirationTime)
-            throws SSLPinningException, SignatureException, InvalidKeyException {
+            throws SSLPinningException, InvalidKeyException, GenericCryptoException, CryptoProviderException {
         // Load private key
         final PrivateKey privKey = loadPrivateKey(privateKeyPath, privateKeyPassword);
 
         // Remove all whitespaces from fingerprint
-        String fingerprintFormatted = fingerprint.replaceAll("\\s+", "");
+        final String fingerprintFormatted = fingerprint.replaceAll("\\s+", "");
 
         // Convert fingerprint to byte[]
-        byte[] fingerPrintBytes = Hex.decode(fingerprintFormatted);
+        final byte[] fingerPrintBytes = Hex.decode(fingerprintFormatted);
 
         // Convert fingerprint bytes to Base64
         final String fingerprintBase64 = BaseEncoding.base64().encode(fingerPrintBytes);
@@ -277,7 +291,7 @@ public class Application {
 
         // Compute signature of payload using ECDSA with given EC private key
         final SignatureUtils utils = new SignatureUtils();
-        byte[] signature = utils.computeECDSASignature(data.getBytes(Charsets.UTF_8), privKey);
+        final byte[] signature = utils.computeECDSASignature(data.getBytes(Charsets.UTF_8), privKey);
         final String signatureBase64 = BaseEncoding.base64().encode(signature);
 
         // Return Fingerprint object
@@ -291,10 +305,9 @@ public class Application {
      * @param certInfo Information about certificate.
      * @return Signed certificate fingerprint.
      * @throws SSLPinningException Thrown when certificate fingerprint signature could not be computed.
-     * @throws java.security.SignatureException Thrown when data signature could not be computed.
      * @throws InvalidKeyException Thrown when private key is invalid.
      */
-    CertificateInfo sign(String privateKeyPath, String privateKeyPassword, CertificateInfo certInfo) throws SSLPinningException, java.security.SignatureException, InvalidKeyException {
+    CertificateInfo sign(String privateKeyPath, String privateKeyPassword, CertificateInfo certInfo) throws SSLPinningException, InvalidKeyException, GenericCryptoException, CryptoProviderException {
         return sign(privateKeyPath, privateKeyPassword, certInfo.getName(), certInfo.getFingerprint(), certInfo.getExpires());
     }
 
@@ -316,21 +329,21 @@ public class Application {
                 if (password != null) {
                     throw new SSLPinningException("Private key is not encrypted, however private key password is specified.");
                 }
-                byte[] privateKeyBytes = ((PrivateKeyInfo) pemInfo).getEncoded();
-                KeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
+                final byte[] privateKeyBytes = ((PrivateKeyInfo) pemInfo).getEncoded();
+                final KeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
                 return kf.generatePrivate(keySpec);
             } else if (pemInfo instanceof PKCS8EncryptedPrivateKeyInfo) {
                 // Private key is encrypted by password, decrypt it
-                PKCS8EncryptedPrivateKeyInfo pemPrivateKeyInfo = (PKCS8EncryptedPrivateKeyInfo) pemInfo;
+                final PKCS8EncryptedPrivateKeyInfo pemPrivateKeyInfo = (PKCS8EncryptedPrivateKeyInfo) pemInfo;
                 if (password == null) {
                     throw new SSLPinningException("Private key is encrypted, however private key password is missing.");
                 }
-                InputDecryptorProvider provider = new JceOpenSSLPKCS8DecryptorProviderBuilder().build(password.toCharArray());
-                JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+                final InputDecryptorProvider provider = new JceOpenSSLPKCS8DecryptorProviderBuilder().build(password.toCharArray());
+                final JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
                 return converter.getPrivateKey(pemPrivateKeyInfo.decryptPrivateKeyInfo(provider));
             }
         } catch (Exception ex) {
-            throw new SSLPinningException("Failed to load private key, error: "+ex.getMessage(), ex);
+            throw new SSLPinningException("Failed to load private key, error: " + ex.getMessage(), ex);
 
         }
         throw new SSLPinningException("Private key could not be loaded because of unknown format.");
@@ -348,20 +361,20 @@ public class Application {
             final Object pemInfo = pemParser.readObject();
             pemParser.close();
             if (pemInfo instanceof X509CertificateHolder) {
-                X509CertificateHolder x509Cert = (X509CertificateHolder) pemInfo;
-                CertificateInfo certInfo = new CertificateInfo();
-                byte[] signature = computeSHA256Signature(x509Cert.getEncoded());
+                final X509CertificateHolder x509Cert = (X509CertificateHolder) pemInfo;
+                final CertificateInfo certInfo = new CertificateInfo();
+                final byte[] signature = computeSHA256Signature(x509Cert.getEncoded());
                 certInfo.setFingerprint(new String(Hex.encode(signature)));
                 // Expiration timestamps is stored as unix timestamp with seconds
                 certInfo.setExpires(x509Cert.getNotAfter().getTime()/1000);
-                X500Name x500Name = x509Cert.getSubject();
-                RDN commonNameRDN = x500Name.getRDNs(BCStyle.CN)[0];
-                String commonName = IETFUtils.valueToString(commonNameRDN.getFirst().getValue());
+                final X500Name x500Name = x509Cert.getSubject();
+                final RDN commonNameRDN = x500Name.getRDNs(BCStyle.CN)[0];
+                final String commonName = IETFUtils.valueToString(commonNameRDN.getFirst().getValue());
                 certInfo.setName(commonName);
                 return certInfo;
             }
         } catch (Exception ex) {
-            throw new SSLPinningException("Failed to load certificate, error: "+ex.getMessage(), ex);
+            throw new SSLPinningException("Failed to load certificate, error: " + ex.getMessage(), ex);
 
         }
         throw new SSLPinningException("Certificate could not be loaded because of unknown format.");
@@ -374,7 +387,7 @@ public class Application {
      * @throws NoSuchAlgorithmException Thrown when SHA-256 algorithm is not supported.
      */
     private byte[] computeSHA256Signature(byte[] certificateData) throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        final MessageDigest md = MessageDigest.getInstance("SHA-256");
         md.update(certificateData);
         return md.digest();
     }
@@ -385,14 +398,14 @@ public class Application {
      * @param keyPairPassword Private key password (optional).
      * @throws IOException Thrown when key pair could not be generates.
      */
-    void generateKeyPair(String outputPath, String keyPairPassword) throws IOException {
+    void generateKeyPair(String outputPath, String keyPairPassword) throws CryptoProviderException, IOException {
         final KeyGenerator keyGen = new KeyGenerator();
         final KeyPair keyPair = keyGen.generateKeyPair();
         OutputEncryptor encryptor = null;
         // The getEncoded() method returns key in PKCS8 format, it can be either unencrypted or encrypted
         if (keyPairPassword != null) {
             // Password was specified, generate encrypted PEM file
-            JceOpenSSLPKCS8EncryptorBuilder encryptorBuilder = new JceOpenSSLPKCS8EncryptorBuilder(PASSWORD_ENCRYPTION_ALGORITHM);
+            final JceOpenSSLPKCS8EncryptorBuilder encryptorBuilder = new JceOpenSSLPKCS8EncryptorBuilder(PASSWORD_ENCRYPTION_ALGORITHM);
             encryptorBuilder.setProvider("BC");
             encryptorBuilder.setRandom(new SecureRandom());
             encryptorBuilder.setPasssword(keyPairPassword.toCharArray());
@@ -401,7 +414,7 @@ public class Application {
                 encryptor = encryptorBuilder.build();
             } catch (OperatorCreationException ex) {
                 // Failed to create encryptor, PEM file will not be encrypted
-                Logger.getLogger(Application.class.getName()).log(Level.SEVERE, "Failed to create encryptor, PEM file will not be encrypted. Error: "+ex.getMessage(), ex);
+                logger.error("Failed to create encryptor, PEM file will not be encrypted. Error: {}", ex.getMessage(), ex);
             }
         }
 
@@ -414,7 +427,7 @@ public class Application {
         final FileWriter fw = new FileWriter(outputPath);
         try (PemWriter pemWriterPriv = new PemWriter(fw)) {
             pemWriterPriv.writeObject(pemObject);
-            Logger.getLogger(Application.class.getName()).log(Level.INFO, "EC private key generated in file: " + outputPath);
+            System.out.println("EC private key generated in file: " + outputPath);
         }
     }
 
@@ -431,7 +444,7 @@ public class Application {
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
         objectMapper.writeValue(fw, fingerPrint);
         fw.close();
-        Logger.getLogger(Application.class.getName()).log(Level.INFO, "JSON output generated in file: " + outputPath);
+        System.out.println("JSON output generated in file: " + outputPath);
     }
 
     /**
@@ -442,14 +455,28 @@ public class Application {
      */
     PublicKey exportPublicKey(String privateKeyPath, String privateKeyPassword) throws SSLPinningException {
         try {
-            PrivateKey privateKey = loadPrivateKey(privateKeyPath, privateKeyPassword);
-            KeyFactory keyFactory = KeyFactory.getInstance("ECDSA", "BC");
-            ECNamedCurveParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("secp256r1");
-            ECPoint Q = ecSpec.getG().multiply(((ECPrivateKey) privateKey).getD());
-            ECPublicKeySpec pubSpec = new ECPublicKeySpec(Q, ecSpec);
+            final PrivateKey privateKey = loadPrivateKey(privateKeyPath, privateKeyPassword);
+            final KeyFactory keyFactory = KeyFactory.getInstance("ECDSA", "BC");
+            final ECNamedCurveParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("secp256r1");
+            final ECPoint Q = ecSpec.getG().multiply(((ECPrivateKey) privateKey).getD());
+            final ECPublicKeySpec pubSpec = new ECPublicKeySpec(Q, ecSpec);
             return keyFactory.generatePublic(pubSpec);
         } catch (Exception ex) {
-            throw new SSLPinningException("Failed to convert private key, error: "+ex.getMessage(), ex);
+            throw new SSLPinningException("Failed to convert private key, error: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * Load private key
+     * @param privateKeyPath Path to private key.
+     * @param privateKeyPassword Private key password.
+     * @throws SSLPinningException Thrown when export fails.
+     */
+    PrivateKey exportPrivateKey(String privateKeyPath, String privateKeyPassword) throws SSLPinningException {
+        try {
+            return loadPrivateKey(privateKeyPath, privateKeyPassword);
+        } catch (Exception ex) {
+            throw new SSLPinningException("Failed to convert private key, error: " + ex.getMessage(), ex);
         }
     }
 
@@ -457,11 +484,22 @@ public class Application {
      * Prints public key in PEM format.
      * @param publicKey Public key.
      */
-    private void printPublicKey(PublicKey publicKey) {
-        final CryptoProviderUtil keyConversionUtilities = PowerAuthConfiguration.INSTANCE.getKeyConvertor();
-        byte[] publicKeyBytes = keyConversionUtilities.convertPublicKeyToBytes(publicKey);
-        String publicKeyEncoded = BaseEncoding.base64().encode(publicKeyBytes);
-        System.out.println("Exported public key: " + publicKeyEncoded);
+    private void printPublicKey(PublicKey publicKey) throws CryptoProviderException {
+        final KeyConvertor keyConversionUtilities = new KeyConvertor();
+        final byte[] publicKeyBytes = keyConversionUtilities.convertPublicKeyToBytes(publicKey);
+        final String publicKeyEncoded = BaseEncoding.base64().encode(publicKeyBytes);
+        System.out.println(publicKeyEncoded);
+    }
+
+    /**
+     * Prints private key in PEM format.
+     * @param privateKey Private key.
+     */
+    private void printPrivateKey(PrivateKey privateKey) {
+        final KeyConvertor keyConversionUtilities = new KeyConvertor();
+        final byte[] privateKeyBytes = keyConversionUtilities.convertPrivateKeyToBytes(privateKey);
+        final String privateKeyEncoded = BaseEncoding.base64().encode(privateKeyBytes);
+        System.out.println(privateKeyEncoded);
     }
 
 }
