@@ -110,6 +110,16 @@ You can convert EC private key to public key and print it:
 java -jar ssl-pinning-tool.jar export -k keypair.pem -p [password]
 ```
 
+### Export Private Key
+
+Server app developers might need the private key from generated key pair in order to be able to dynamically compute signatures. For example, our Mobile Utility Server uses the private key from this utility output.
+
+You can convert EC private key to the appropriate format and print it:
+
+```sh
+java -jar ssl-pinning-tool.jar export-private -k keypair.pem -p [password]
+```
+
 ### Troubleshooting
 
 Error: 
