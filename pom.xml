@@ -73,7 +73,7 @@
         <dependency>
             <groupId>io.getlime.security</groupId>
             <artifactId>powerauth-java-crypto</artifactId>
-            <version>1.2.0</version>
+            <version>1.5.0</version>
         </dependency>
         <dependency>
             <groupId>commons-cli</groupId>
