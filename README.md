@@ -12,7 +12,7 @@ Both approaches are described in chapters below.
 
 ### Supported Java Version
 
-Only Java version 8 is supported at the moment.
+Only Java version 17+ is supported at the moment.
 
 ### Install Bouncy Castle provider
 
