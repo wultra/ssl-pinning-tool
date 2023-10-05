@@ -14,13 +14,6 @@ Both approaches are described in chapters below.
 
 Only Java version 17+ is supported at the moment.
 
-### Install Bouncy Castle provider
-
-The Bouncy Castle library is required to be installed in the JRE in order to run the Java utility.
-
-See:
-https://github.com/wultra/powerauth-server/wiki/Installing-Bouncy-Castle
-
 ### Generate a Signing Key Pair
 
 Before signing the SSL certificate, you will need to generate a new ECDSA key pair and store it in the `keypair.pem` file. You need to store this file securely. This key pair will be used to sign current certificate and all future certificates. If you already signed a certificate before, skip this step and use the previously generated key pair.
