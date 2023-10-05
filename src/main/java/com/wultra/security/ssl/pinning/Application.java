@@ -324,17 +324,16 @@ public class Application {
             final KeyFactory kf = KeyFactory.getInstance("ECDSA", "BC");
             final Object pemInfo = pemParser.readObject();
             pemParser.close();
-            if (pemInfo instanceof PrivateKeyInfo) {
+            if (pemInfo instanceof final PrivateKeyInfo privateKeyInfo) {
                 // Private key is not encrypted
                 if (password != null) {
                     throw new SSLPinningException("Private key is not encrypted, however private key password is specified.");
                 }
-                final byte[] privateKeyBytes = ((PrivateKeyInfo) pemInfo).getEncoded();
+                final byte[] privateKeyBytes = privateKeyInfo.getEncoded();
                 final KeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
                 return kf.generatePrivate(keySpec);
-            } else if (pemInfo instanceof PKCS8EncryptedPrivateKeyInfo) {
+            } else if (pemInfo instanceof final PKCS8EncryptedPrivateKeyInfo pemPrivateKeyInfo) {
                 // Private key is encrypted by password, decrypt it
-                final PKCS8EncryptedPrivateKeyInfo pemPrivateKeyInfo = (PKCS8EncryptedPrivateKeyInfo) pemInfo;
                 if (password == null) {
                     throw new SSLPinningException("Private key is encrypted, however private key password is missing.");
                 }
@@ -360,8 +359,7 @@ public class Application {
             final PEMParser pemParser = new PEMParser(new BufferedReader(fileReader));
             final Object pemInfo = pemParser.readObject();
             pemParser.close();
-            if (pemInfo instanceof X509CertificateHolder) {
-                final X509CertificateHolder x509Cert = (X509CertificateHolder) pemInfo;
+            if (pemInfo instanceof final X509CertificateHolder x509Cert) {
                 final CertificateInfo certInfo = new CertificateInfo();
                 final byte[] signature = computeSHA256Signature(x509Cert.getEncoded());
                 certInfo.setFingerprint(new String(Hex.encode(signature)));
