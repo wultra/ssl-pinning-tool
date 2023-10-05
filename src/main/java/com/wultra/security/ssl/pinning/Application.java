@@ -18,7 +18,6 @@ package com.wultra.security.ssl.pinning;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Charsets;
-import com.google.common.io.BaseEncoding;
 import com.wultra.security.ssl.pinning.errorhandling.SSLPinningException;
 import com.wultra.security.ssl.pinning.model.CertificateInfo;
 import io.getlime.security.powerauth.crypto.lib.model.exception.CryptoProviderException;
@@ -63,6 +62,7 @@ import java.io.*;
 import java.security.*;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Base64;
 
 /**
  * SSL pinning tool command line application for generating signatures of SSL certificates.
@@ -284,7 +284,7 @@ public class Application {
         final byte[] fingerPrintBytes = Hex.decode(fingerprintFormatted);
 
         // Convert fingerprint bytes to Base64
-        final String fingerprintBase64 = BaseEncoding.base64().encode(fingerPrintBytes);
+        final String fingerprintBase64 = Base64.getEncoder().encodeToString(fingerPrintBytes);
 
         // Signature payload
         final String data = commonName + "&" + fingerprintBase64 + "&" + expirationTime;
@@ -292,7 +292,7 @@ public class Application {
         // Compute signature of payload using ECDSA with given EC private key
         final SignatureUtils utils = new SignatureUtils();
         final byte[] signature = utils.computeECDSASignature(data.getBytes(Charsets.UTF_8), privKey);
-        final String signatureBase64 = BaseEncoding.base64().encode(signature);
+        final String signatureBase64 = Base64.getEncoder().encodeToString(signature);
 
         // Return Fingerprint object
         return new CertificateInfo(commonName, fingerprintBase64, expirationTime, signatureBase64);
@@ -485,7 +485,7 @@ public class Application {
     private void printPublicKey(PublicKey publicKey) throws CryptoProviderException {
         final KeyConvertor keyConversionUtilities = new KeyConvertor();
         final byte[] publicKeyBytes = keyConversionUtilities.convertPublicKeyToBytes(publicKey);
-        final String publicKeyEncoded = BaseEncoding.base64().encode(publicKeyBytes);
+        final String publicKeyEncoded = Base64.getEncoder().encodeToString(publicKeyBytes);
         logger.info(publicKeyEncoded);
     }
 
@@ -496,7 +496,7 @@ public class Application {
     private void printPrivateKey(PrivateKey privateKey) {
         final KeyConvertor keyConversionUtilities = new KeyConvertor();
         final byte[] privateKeyBytes = keyConversionUtilities.convertPrivateKeyToBytes(privateKey);
-        final String privateKeyEncoded = BaseEncoding.base64().encode(privateKeyBytes);
+        final String privateKeyEncoded = Base64.getEncoder().encodeToString(privateKeyBytes);
         logger.info(privateKeyEncoded);
     }
 
