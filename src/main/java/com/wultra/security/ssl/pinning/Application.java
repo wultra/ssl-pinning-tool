@@ -17,15 +17,13 @@ package com.wultra.security.ssl.pinning;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.google.common.base.Charsets;
 import com.wultra.security.ssl.pinning.errorhandling.SSLPinningException;
 import com.wultra.security.ssl.pinning.model.CertificateInfo;
+import io.getlime.security.powerauth.crypto.lib.generator.KeyGenerator;
 import io.getlime.security.powerauth.crypto.lib.model.exception.CryptoProviderException;
 import io.getlime.security.powerauth.crypto.lib.model.exception.GenericCryptoException;
 import io.getlime.security.powerauth.crypto.lib.util.KeyConvertor;
 import io.getlime.security.powerauth.crypto.lib.util.SignatureUtils;
-
-import io.getlime.security.powerauth.crypto.lib.generator.KeyGenerator;
 import org.apache.commons.cli.*;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
@@ -58,7 +56,11 @@ import org.bouncycastle.util.io.pem.PemWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -291,7 +293,7 @@ public class Application {
 
         // Compute signature of payload using ECDSA with given EC private key
         final SignatureUtils utils = new SignatureUtils();
-        final byte[] signature = utils.computeECDSASignature(data.getBytes(Charsets.UTF_8), privKey);
+        final byte[] signature = utils.computeECDSASignature(data.getBytes(StandardCharsets.UTF_8), privKey);
         final String signatureBase64 = Base64.getEncoder().encodeToString(signature);
 
         // Return Fingerprint object
