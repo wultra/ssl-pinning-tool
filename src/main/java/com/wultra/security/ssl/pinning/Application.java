@@ -408,7 +408,7 @@ public class Application {
             final JceOpenSSLPKCS8EncryptorBuilder encryptorBuilder = new JceOpenSSLPKCS8EncryptorBuilder(PASSWORD_ENCRYPTION_ALGORITHM);
             encryptorBuilder.setProvider("BC");
             encryptorBuilder.setRandom(new SecureRandom());
-            encryptorBuilder.setPasssword(keyPairPassword.toCharArray());
+            encryptorBuilder.setPassword(keyPairPassword.toCharArray());
             encryptorBuilder.setPRF(PASSWORD_ENCRYPTION_PRF);
             try {
                 encryptor = encryptorBuilder.build();
