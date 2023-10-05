@@ -209,7 +209,7 @@ public class Application {
                 break;
             default:
                 // Unknown action
-                logger.error("Unknown command: " + command);
+                logger.error("Unknown command: {}", command);
         }
     }
 
