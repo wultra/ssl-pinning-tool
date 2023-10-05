@@ -427,7 +427,7 @@ public class Application {
         final FileWriter fw = new FileWriter(outputPath);
         try (PemWriter pemWriterPriv = new PemWriter(fw)) {
             pemWriterPriv.writeObject(pemObject);
-            System.out.println("EC private key generated in file: " + outputPath);
+            logger.info("EC private key generated in file: {}", outputPath);
         }
     }
 
@@ -444,7 +444,7 @@ public class Application {
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
         objectMapper.writeValue(fw, fingerPrint);
         fw.close();
-        System.out.println("JSON output generated in file: " + outputPath);
+        logger.info("JSON output generated in file: {}", outputPath);
     }
 
     /**
@@ -488,7 +488,7 @@ public class Application {
         final KeyConvertor keyConversionUtilities = new KeyConvertor();
         final byte[] publicKeyBytes = keyConversionUtilities.convertPublicKeyToBytes(publicKey);
         final String publicKeyEncoded = BaseEncoding.base64().encode(publicKeyBytes);
-        System.out.println(publicKeyEncoded);
+        logger.info(publicKeyEncoded);
     }
 
     /**
@@ -499,7 +499,7 @@ public class Application {
         final KeyConvertor keyConversionUtilities = new KeyConvertor();
         final byte[] privateKeyBytes = keyConversionUtilities.convertPrivateKeyToBytes(privateKey);
         final String privateKeyEncoded = BaseEncoding.base64().encode(privateKeyBytes);
-        System.out.println(privateKeyEncoded);
+        logger.info(privateKeyEncoded);
     }
 
 }
