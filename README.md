@@ -12,14 +12,7 @@ Both approaches are described in chapters below.
 
 ### Supported Java Version
 
-Only Java version 8 is supported at the moment.
-
-### Install Bouncy Castle provider
-
-The Bouncy Castle library is required to be installed in the JRE in order to run the Java utility.
-
-See:
-https://github.com/wultra/powerauth-server/wiki/Installing-Bouncy-Castle
+Only Java version 17+ is supported at the moment.
 
 ### Generate a Signing Key Pair
 
@@ -108,6 +101,16 @@ You can convert EC private key to public key and print it:
 
 ```sh
 java -jar ssl-pinning-tool.jar export -k keypair.pem -p [password]
+```
+
+### Export Private Key
+
+Server app developers might need the private key from generated key pair in order to be able to dynamically compute signatures. For example, our Mobile Utility Server uses the private key from this utility output.
+
+You can convert EC private key to the appropriate format and print it:
+
+```sh
+java -jar ssl-pinning-tool.jar export-private -k keypair.pem -p [password]
 ```
 
 ### Troubleshooting
