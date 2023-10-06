@@ -326,7 +326,9 @@ public class Application {
             final KeyFactory kf = KeyFactory.getInstance("ECDSA", "BC");
             final Object pemInfo = pemParser.readObject();
             pemParser.close();
-            if (pemInfo instanceof final PrivateKeyInfo privateKeyInfo) {
+            if (pemInfo == null) {
+                throw new SSLPinningException("PemParser read null");
+            } else if (pemInfo instanceof final PrivateKeyInfo privateKeyInfo) {
                 // Private key is not encrypted
                 if (password != null) {
                     throw new SSLPinningException("Private key is not encrypted, however private key password is specified.");
@@ -345,7 +347,6 @@ public class Application {
             }
         } catch (Exception ex) {
             throw new SSLPinningException("Failed to load private key, error: " + ex.getMessage(), ex);
-
         }
         throw new SSLPinningException("Private key could not be loaded because of unknown format.");
     }
@@ -361,7 +362,9 @@ public class Application {
             final PEMParser pemParser = new PEMParser(new BufferedReader(fileReader));
             final Object pemInfo = pemParser.readObject();
             pemParser.close();
-            if (pemInfo instanceof final X509CertificateHolder x509Cert) {
+            if (pemInfo == null) {
+                throw new SSLPinningException("PemParser read null");
+            } else if (pemInfo instanceof final X509CertificateHolder x509Cert) {
                 final CertificateInfo certInfo = new CertificateInfo();
                 final byte[] signature = computeSHA256Signature(x509Cert.getEncoded());
                 certInfo.setFingerprint(new String(Hex.encode(signature)));
@@ -375,7 +378,6 @@ public class Application {
             }
         } catch (Exception ex) {
             throw new SSLPinningException("Failed to load certificate, error: " + ex.getMessage(), ex);
-
         }
         throw new SSLPinningException("Certificate could not be loaded because of unknown format.");
     }
@@ -458,6 +460,9 @@ public class Application {
             final PrivateKey privateKey = loadPrivateKey(privateKeyPath, privateKeyPassword);
             final KeyFactory keyFactory = KeyFactory.getInstance("ECDSA", "BC");
             final ECNamedCurveParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("secp256r1");
+            if (ecSpec == null) {
+                throw new SSLPinningException("Curve secp256r1 is not present");
+            }
             final ECPoint Q = ecSpec.getG().multiply(((ECPrivateKey) privateKey).getD());
             final ECPublicKeySpec pubSpec = new ECPublicKeySpec(Q, ecSpec);
             return keyFactory.generatePublic(pubSpec);
