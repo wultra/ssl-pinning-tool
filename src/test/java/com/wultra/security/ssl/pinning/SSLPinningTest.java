@@ -1,6 +1,5 @@
 package com.wultra.security.ssl.pinning;
 
-import com.google.common.io.BaseEncoding;
 import com.wultra.security.ssl.pinning.errorhandling.SSLPinningException;
 import com.wultra.security.ssl.pinning.model.CertificateInfo;
 import io.getlime.security.powerauth.crypto.lib.util.SignatureUtils;
@@ -12,6 +11,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.security.PublicKey;
 import java.security.Security;
+import java.util.Base64;
 import java.util.Scanner;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -55,7 +55,7 @@ class SSLPinningTest {
     void testSignatureWithDetails() throws Exception {
         CertificateInfo certInfo = app.sign(keyPairFile.getAbsolutePath(), PRIVATE_KEY_PASSWORD,
                 "www.google.com", "9eed43381cf7d58e4563a951364255fc776707a043542a7b997d27c646ee6fb6", 1540280280L);
-        byte[] signature = BaseEncoding.base64().decode(certInfo.getSignature());
+        byte[] signature = Base64.getDecoder().decode(certInfo.getSignature());
         PublicKey publicKey = app.exportPublicKey(keyPairFile.getAbsolutePath(), PRIVATE_KEY_PASSWORD);
         String payload = "www.google.com&nu1DOBz31Y5FY6lRNkJV/HdnB6BDVCp7mX0nxkbub7Y=&1540280280";
         final SignatureUtils utils = new SignatureUtils();
@@ -69,7 +69,7 @@ class SSLPinningTest {
         certInfoIn.setExpires(1540280280L);
         certInfoIn.setFingerprint("9eed43381cf7d58e4563a951364255fc776707a043542a7b997d27c646ee6fb6");
         CertificateInfo certInfo = app.sign(keyPairFile.getAbsolutePath(), PRIVATE_KEY_PASSWORD, certInfoIn);
-        byte[] signature = BaseEncoding.base64().decode(certInfo.getSignature());
+        byte[] signature = Base64.getDecoder().decode(certInfo.getSignature());
         PublicKey publicKey = app.exportPublicKey(keyPairFile.getAbsolutePath(), PRIVATE_KEY_PASSWORD);
         String payload = "www.google.com&nu1DOBz31Y5FY6lRNkJV/HdnB6BDVCp7mX0nxkbub7Y=&1540280280";
         final SignatureUtils utils = new SignatureUtils();
@@ -80,7 +80,7 @@ class SSLPinningTest {
     void testReadCertificate() throws Exception {
         File cerFile = File.createTempFile("ssl_pinning", ".cer");
         FileWriter fw = new FileWriter(cerFile.getAbsolutePath());
-        fw.write(new String(BaseEncoding.base64().decode(TEST_CERTIFICATE_BASE64)));
+        fw.write(new String(Base64.getDecoder().decode(TEST_CERTIFICATE_BASE64)));
         fw.close();
         CertificateInfo certInfo = app.readCertificateInfo(cerFile.getAbsolutePath());
         assertEquals("www.google.com", certInfo.getName());
@@ -94,7 +94,7 @@ class SSLPinningTest {
         File jsonFile = File.createTempFile("ssl_pinning", ".json");
         File cerFile = File.createTempFile("ssl_pinning", ".cer");
         FileWriter fw = new FileWriter(cerFile.getAbsolutePath());
-        fw.write(new String(BaseEncoding.base64().decode(TEST_CERTIFICATE_BASE64)));
+        fw.write(new String(Base64.getDecoder().decode(TEST_CERTIFICATE_BASE64)));
         fw.close();
         CertificateInfo certInfoIn = app.readCertificateInfo(cerFile.getAbsolutePath());
         CertificateInfo certInfo = app.sign(keyPairFile.getAbsolutePath(), PRIVATE_KEY_PASSWORD, certInfoIn);
