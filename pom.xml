@@ -54,7 +54,7 @@
     </issueManagement>
 
     <properties>
-        <bcprov-jdk18on.version>1.81</bcprov-jdk18on.version>
+        <bcprov-jdk18on.version>1.82</bcprov-jdk18on.version>
         <powerauth-crypto.version>1.10.0</powerauth-crypto.version>
     </properties>
 
