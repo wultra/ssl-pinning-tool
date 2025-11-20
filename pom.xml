@@ -56,6 +56,7 @@
     <properties>
         <bcprov-jdk18on.version>1.82</bcprov-jdk18on.version>
         <powerauth-crypto.version>1.10.0</powerauth-crypto.version>
+        <central.publishing.plugin.version>0.9.0</central.publishing.plugin.version>
     </properties>
 
     <dependencies>
@@ -99,6 +100,16 @@
     </dependencies>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.sonatype.central</groupId>
+                    <artifactId>central-publishing-maven-plugin</artifactId>
+                    <version>${central.publishing.plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
             <!-- Use spring-boot-maven-plugin to generate fat jar, however start application with a regular Main class -->
             <plugin>
@@ -163,8 +174,6 @@
                     <name>!useInternalRepo</name>
                 </property>
             </activation>
-            <properties>
-            </properties>
             <distributionManagement>
                 <snapshotRepository>
                     <id>central-portal-snapshots-distribution</id>
@@ -175,6 +184,23 @@
                     <url>https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/</url>
                 </repository>
             </distributionManagement>
+            <properties>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>${env.server_id}</publishingServerId>
+                            <autoPublish>true</autoPublish>
+                            <waitUntil>published</waitUntil>
+                            <waitMaxTime>${env.wait_max_time}</waitMaxTime>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 
