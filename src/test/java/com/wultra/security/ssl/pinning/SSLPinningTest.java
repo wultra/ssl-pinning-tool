@@ -2,7 +2,7 @@ package com.wultra.security.ssl.pinning;
 
 import com.wultra.security.ssl.pinning.errorhandling.SSLPinningException;
 import com.wultra.security.ssl.pinning.model.CertificateInfo;
-import io.getlime.security.powerauth.crypto.lib.util.SignatureUtils;
+import com.wultra.security.powerauth.crypto.lib.util.SignatureUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
