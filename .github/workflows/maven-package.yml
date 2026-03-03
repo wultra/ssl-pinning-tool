@@ -18,7 +18,7 @@ jobs:
       - name: Run Maven Package Step
         run: mvn -B -U package
       - name: Archive JAR Artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: Jar Artifacts
           path: '**/target/*.jar'
